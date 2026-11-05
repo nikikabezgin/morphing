@@ -1,0 +1,724 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#121311">
+  <title>Numeral Field — студия цифровых форм</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #121311;
+      --panel: #1a1b18;
+      --panel-soft: #20211e;
+      --line: #343530;
+      --muted: #96978e;
+      --text: #f1f0e9;
+      --acid: #e3e3dc;
+      --paper: #f2f0eb;
+      --radius: 13px;
+    }
+    * { box-sizing: border-box; }
+    html, body { min-height: 100%; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, "Helvetica Neue", Arial, sans-serif;
+      letter-spacing: -0.015em;
+    }
+    button, input { font: inherit; }
+    button { color: inherit; }
+    .app { min-height: 100vh; display: flex; flex-direction: column; }
+    .topbar {
+      height: 52px; flex: 0 0 52px; display: flex; align-items: center;
+      justify-content: space-between; padding: 0 30px; border-bottom: 1px solid var(--line);
+      background: #151613;
+    }
+    .brand { display: flex; align-items: center; gap: 11px; font-size: 12px; font-weight: 650; letter-spacing: .06em; }
+    .brand-mark {
+      width: 28px; height: 28px; display: grid; place-items: center; color: var(--bg);
+      background: var(--acid); border-radius: 50%; font: 800 12px/1 "Courier New", monospace;
+      letter-spacing: -.08em;
+    }
+    .topmeta { display: flex; align-items: center; gap: 20px; color: var(--muted); font-size: 11px; letter-spacing: .11em; text-transform: uppercase; }
+    .live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--acid); box-shadow: 0 0 12px #d7ff5c55; display: inline-block; margin-right: 7px; }
+    .workspace { flex: 1; display: grid; grid-template-columns: 316px minmax(0, 1fr); min-height: calc(100vh - 52px); }
+    .controls {
+      padding: 25px 21px 24px; border-right: 1px solid var(--line); background: #171815;
+      display: flex; flex-direction: column; gap: 19px; overflow-y: auto;
+    }
+    .eyebrow { color: var(--acid); font: 700 10px/1.2 "Courier New", monospace; letter-spacing: .16em; text-transform: uppercase; }
+    h1 { font-size: 25px; line-height: 1.07; letter-spacing: -.055em; font-weight: 640; margin: 9px 0 8px; max-width: 240px; }
+    .intro-copy { color: #a8a99f; font-size: 12px; line-height: 1.55; margin: 0; max-width: 255px; }
+    .upload {
+      width: 100%; min-height: 72px; display: flex; align-items: center; gap: 12px; text-align: left;
+      padding: 13px 14px; border: 1px dashed #5b5d53; border-radius: 10px; background: #1d1e1a;
+      cursor: pointer; transition: border-color 150ms ease, background-color 150ms ease;
+    }
+    .upload:hover, .upload.drag { border-color: #9b9b94; background: #242420; }
+    .upload-icon { width: 34px; height: 34px; border-radius: 8px; background: #2c2e27; display: grid; place-items: center; color: var(--acid); flex: 0 0 auto; }
+    .upload-title { font-size: 12px; font-weight: 650; display: block; margin-bottom: 4px; }
+    .upload-note { font-size: 10px; color: var(--muted); display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 198px; }
+    .control-block { display: flex; flex-direction: column; gap: 10px; }
+    .label-row { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+    .label { color: #b8b9b0; font: 700 10px/1.2 "Courier New", monospace; letter-spacing: .11em; text-transform: uppercase; }
+    .value { color: var(--acid); font: 12px/1 "Courier New", monospace; font-variant-numeric: tabular-nums; }
+    .mode-grid { display: grid; grid-template-columns: repeat(3, 1fr); padding: 3px; gap: 3px; border: 1px solid #363731; border-radius: 9px; background: #10110f; }
+    .mode {
+      border: 0; border-radius: 6px; background: transparent; color: #a4a59c; cursor: pointer;
+      min-height: 34px; font-size: 11px; transition: background-color 150ms ease, color 150ms ease;
+    }
+    .mode:hover { color: var(--text); }
+    .mode.active { background: #33332f; color: var(--text); box-shadow: inset 0 0 0 1px #55554f; }
+    .slider-wrap { display: flex; flex-direction: column; gap: 7px; }
+    input[type="range"] {
+      appearance: none; width: 100%; height: 3px; border-radius: 10px; background: #484a42; outline: none; margin: 7px 0 6px;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      appearance: none; width: 13px; height: 13px; border-radius: 50%; background: var(--acid);
+      border: 2px solid #1b1c18; box-shadow: 0 0 0 1px var(--acid); cursor: grab;
+    }
+    input[type="range"]::-moz-range-thumb {
+      width: 11px; height: 11px; border-radius: 50%; background: var(--acid); border: 2px solid #1b1c18;
+      box-shadow: 0 0 0 1px var(--acid); cursor: grab;
+    }
+    .range-ends { display: flex; justify-content: space-between; color: #777970; font: 9px/1 "Courier New", monospace; letter-spacing: .05em; }
+    .digits-input {
+      width: 100%; height: 38px; border: 1px solid #41433c; border-radius: 8px; background: #10110f;
+      color: var(--text); padding: 0 11px; font: 14px/1 "Courier New", monospace; letter-spacing: .17em;
+      outline: none; transition: border-color 150ms ease;
+    }
+    .digits-input:focus { border-color: var(--acid); }
+    .inline-note { color: #777970; font-size: 10px; line-height: 1.4; margin-top: -5px; }
+    .toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 15px; }
+    .toggle-copy { font-size: 11px; color: #c1c2b8; }
+    .switch { position: relative; display: inline-flex; width: 35px; height: 20px; flex: 0 0 auto; }
+    .switch input { opacity: 0; width: 1px; height: 1px; position: absolute; }
+    .switch-track { position: absolute; inset: 0; border-radius: 99px; background: #44463f; cursor: pointer; transition: background-color 150ms ease; }
+    .switch-track::after { content: ""; position: absolute; width: 14px; height: 14px; left: 3px; top: 3px; border-radius: 50%; background: #d2d2c9; transition: transform 150ms ease, background-color 150ms ease; }
+    .switch input:checked + .switch-track { background: #777870; }
+    .switch input:checked + .switch-track::after { transform: translateX(15px); background: var(--acid); }
+    .switch input:focus-visible + .switch-track { outline: 2px solid var(--acid); outline-offset: 3px; }
+    .palette-row { display: flex; gap: 8px; }
+    .swatch {
+      width: 25px; height: 25px; border-radius: 50%; border: 2px solid transparent; cursor: pointer;
+      box-shadow: 0 0 0 1px #66675e; transition: scale 150ms ease, box-shadow 150ms ease;
+    }
+    .swatch:hover { scale: 1.08; }
+    .swatch.active { box-shadow: 0 0 0 1px var(--acid); }
+    .swatch[data-paper="#f2f0eb"] { background: #f2f0eb; }
+    .swatch[data-paper="#080908"] { background: #080908; }
+    .swatch[data-paper="#d7d8d2"] { background: #d7d8d2; }
+    .ink-select { border: 1px solid #41433c; background: #10110f; border-radius: 8px; color: var(--text); padding: 8px 10px; font-size: 11px; }
+    .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding-top: 4px; }
+    .button {
+      min-height: 40px; border-radius: 8px; padding: 0 12px; display: inline-flex; align-items: center;
+      justify-content: center; gap: 8px; cursor: pointer; font-size: 11px; font-weight: 650;
+      border: 1px solid #494b43; background: #22231f; color: var(--text);
+      transition: background-color 150ms ease, border-color 150ms ease, scale 120ms ease;
+    }
+    .button:hover { border-color: #777970; background: #292a25; }
+    .button:active { scale: .96; }
+    .button.primary { background: var(--acid); color: #171811; border-color: var(--acid); }
+    .button.primary:hover { background: #fafaf5; }
+    .button.primary:disabled { opacity: .55; cursor: wait; }
+    .button.svg-export { grid-column: 1 / -1; }
+    .aside-foot { margin-top: auto; padding-top: 5px; color: #6e7068; font-size: 10px; line-height: 1.45; }
+    .stage { min-width: 0; padding: 24px 28px 27px; display: flex; flex-direction: column; gap: 13px; }
+    .stage-head { display: flex; align-items: center; justify-content: space-between; min-height: 28px; gap: 16px; }
+    .stage-title { font-size: 12px; color: #d0d1c8; font-weight: 620; letter-spacing: .02em; }
+    .stage-title span { color: #73756c; font: 10px "Courier New", monospace; margin-left: 10px; }
+    .stage-tools { display: flex; align-items: center; gap: 8px; }
+    .mini-button { border: 1px solid #373832; background: transparent; color: #b5b6ad; border-radius: 7px; padding: 7px 10px; font-size: 10px; cursor: pointer; }
+    .mini-button:hover { color: var(--acid); border-color: #686a5e; }
+    .canvas-frame {
+      position: relative; width: 100%; overflow: hidden; border: 1px solid #42443d; border-radius: var(--radius);
+      background-color: #20211e;
+    }
+    #preview { display: block; width: 100%; aspect-ratio: 1.6; height: auto; }
+    .canvas-caption {
+      position: absolute; left: 13px; bottom: 12px; color: #85877c; font: 9px "Courier New", monospace;
+      letter-spacing: .1em; text-transform: uppercase; background: #171815d9; border: 1px solid #ffffff14; border-radius: 5px; padding: 5px 7px;
+    }
+    .canvas-meta { position: absolute; right: 13px; bottom: 12px; color: #85877c; font: 9px "Courier New", monospace; }
+    .variants {
+      display: none; gap: 9px; grid-template-columns: repeat(4, minmax(0,1fr)); padding-top: 1px;
+    }
+    .variants.show { display: grid; }
+    .variant-card {
+      border: 1px solid #383a34; background: #1a1b18; padding: 6px; border-radius: 9px; cursor: pointer;
+      text-align: left; min-width: 0; transition: border-color 150ms ease, background-color 150ms ease;
+    }
+    .variant-card:hover, .variant-card.selected { border-color: var(--acid); background: #20221b; }
+    .variant-card canvas { display: block; width: 100%; aspect-ratio: 1.6; height: auto; border-radius: 4px; }
+    .variant-name { display: flex; justify-content: space-between; padding: 7px 2px 1px; gap: 5px; color: #bdbeb4; font: 9px "Courier New", monospace; }
+    .variant-name span:last-child { color: #777970; }
+    .empty-note { color: #82847a; font-size: 10px; text-align: right; margin: -5px 1px 0; }
+    .toast {
+      position: fixed; bottom: 22px; left: 50%; transform: translate(-50%, 8px); opacity: 0; pointer-events: none;
+      background: #e3e3dc; color: #171811; border-radius: 8px; padding: 10px 14px; font-size: 12px; font-weight: 650;
+      box-shadow: 0 8px 24px #0006; transition: opacity 150ms ease, transform 150ms ease; z-index: 10;
+    }
+    .toast.show { opacity: 1; transform: translate(-50%, 0); }
+    .mobile-notice { display: none; }
+    @media (max-width: 1000px) {
+      .workspace { grid-template-columns: 286px minmax(0,1fr); }
+      .controls { padding-inline: 17px; }
+      .stage { padding-inline: 19px; }
+    }
+    @media (max-width: 760px) {
+      .topbar { padding-inline: 16px; }
+      .workspace { display: none; }
+      .mobile-notice { display: flex; flex: 1; flex-direction: column; justify-content: center; align-items: flex-start; max-width: 420px; padding: 32px 24px 100px; }
+      .mobile-notice h1 { max-width: none; margin: 0 0 14px; font-size: 27px; line-height: 1.15; }
+      .mobile-notice p { margin: 0; color: #a8a99f; font-size: 15px; line-height: 1.55; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand"><span>NUMERAL FIELD</span></div>
+    </header>
+    <div class="mobile-notice">
+      <h1>Откройте на компьютере</h1>
+      <p>Редактор работает на компьютере — здесь удобнее рисовать формы и настраивать композицию.</p>
+    </div>
+    <div class="workspace">
+      <aside class="controls" aria-label="Настройки композиции">
+        <input id="fileInput" type="file" accept="image/*" hidden>
+        <button class="upload" id="uploadButton" type="button">
+          <span class="upload-icon" aria-hidden="true">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5M5 15v4h14v-4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span>
+          <span><strong class="upload-title">Загрузить изображение</strong><span class="upload-note" id="fileName">PNG, JPG или SVG · работает и демо-форма</span></span>
+        </button>
+
+        <section class="control-block">
+          <div class="label-row"><span class="label">РЕЖИМ ФОРМЫ</span><span class="value" id="modeReadout">01 / 03</span></div>
+          <div class="mode-grid" role="group" aria-label="Режим построения">
+            <button class="mode active" type="button" data-mode="shape" aria-pressed="true">Силуэт</button>
+            <button class="mode" type="button" data-mode="flow" aria-pressed="false">Поток</button>
+            <button class="mode" type="button" data-mode="contour" aria-pressed="false">Контур</button>
+          </div>
+        </section>
+
+        <section class="control-block slider-wrap">
+          <div class="label-row"><label class="label" for="density">ПЛОТНОСТЬ</label><output class="value" id="densityValue">68%</output></div>
+          <input id="density" type="range" min="8" max="100" value="68" aria-label="Плотность символов">
+          <div class="range-ends"><span>ВОЗДУХ</span><span>МАССА</span></div>
+        </section>
+
+        <section class="control-block slider-wrap">
+          <div class="label-row"><label class="label" for="size">РАЗМЕР СИМВОЛОВ</label><output class="value" id="sizeValue">48%</output></div>
+          <input id="size" type="range" min="5" max="100" value="48" aria-label="Размер символов">
+          <div class="range-ends"><span>МЕЛКО</span><span>КРУПНО</span></div>
+        </section>
+
+        <section class="control-block slider-wrap">
+          <div class="label-row"><label class="label" for="fillAmount">СИМВОЛОВ С ПОДЛОЖКОЙ</label><output class="value" id="fillAmountValue">45%</output></div>
+          <input id="fillAmount" type="range" min="0" max="100" value="45">
+          <div class="range-ends"><span>БЕЗ ПОДЛОЖКИ</span><span>ВСЕ С ПОДЛОЖКОЙ</span></div>
+        </section>
+
+        <section class="control-block slider-wrap">
+          <div class="label-row"><label class="label" for="fillSize">РАЗМЕР ПОДЛОЖКИ</label><output class="value" id="fillSizeValue">50%</output></div>
+          <input id="fillSize" type="range" min="0" max="100" value="50">
+          <div class="range-ends"><span>КОМПАКТНО</span><span>КРУПНО</span></div>
+        </section>
+
+        <section class="control-block slider-wrap">
+          <div class="label-row"><label class="label" for="glue">СКЛЕИВАНИЕ</label><output class="value" id="glueValue">50%</output></div>
+          <input id="glue" type="range" min="0" max="100" value="50">
+          <div class="range-ends"><span>ОТДЕЛЬНО</span><span>ОБЩАЯ ФОРМА</span></div>
+        </section>
+
+        <section class="control-block slider-wrap">
+          <div class="label-row"><label class="label" for="morph">МОРФИНГ</label><output class="value" id="morphValue">34%</output></div>
+          <input id="morph" type="range" min="0" max="100" value="34" aria-label="Сила морфинга">
+          <div class="range-ends"><span>ФОРМА</span><span>РАСТВОРЕНИЕ</span></div>
+        </section>
+
+        <section class="control-block slider-wrap">
+          <div class="label-row"><label class="label" for="contrast">КОНТРАСТ ФОРМЫ</label><output class="value" id="contrastValue">62%</output></div>
+          <input id="contrast" type="range" min="0" max="100" value="62" aria-label="Контраст изображения">
+          <div class="range-ends"><span>МЯГКО</span><span>ЧЁТКО</span></div>
+        </section>
+
+        <section class="control-block">
+          <div class="label-row"><label class="label" for="digits">НАБОР СИМВОЛОВ</label></div>
+          <input class="digits-input" id="digits" value="0123456789" maxlength="64" aria-label="Набор символов">
+          <span class="inline-note">Буквы, цифры и знаки в любом сочетании.</span>
+        </section>
+
+        <div class="toggle-row">
+          <span class="toggle-copy">Двигать форму</span>
+          <label class="switch"><input id="animate" type="checkbox"><span class="switch-track"></span></label>
+        </div>
+
+        <section class="control-block">
+          <div class="label-row"><span class="label">ЦВЕТ БУМАГИ</span><span class="value">02 / 03</span></div>
+          <div class="palette-row" role="group" aria-label="Цвет фона">
+            <button class="swatch active" type="button" data-paper="#f2f0eb" aria-label="Тёплая бумага" title="Тёплая бумага"></button>
+            <button class="swatch" type="button" data-paper="#080908" aria-label="Чёрный фон" title="Чёрный фон"></button>
+            <button class="swatch" type="button" data-paper="#d7d8d2" aria-label="Серый фон" title="Серый фон"></button>
+          </div>
+          <select class="ink-select" id="ink" aria-label="Цвет символов">
+            <option value="auto">Чернила · авто</option>
+            <option value="#11120f">Чёрные символы</option>
+            <option value="#f3f1eb">Белые символы</option>
+            <option value="#d84f38">Красный акцент</option>
+          </select>
+        </section>
+
+        <div class="actions">
+          <button class="button" id="variantsButton" type="button">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 4.5h10M3 8h10M3 11.5h10M5 2.5v12M11 2.5v12" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+            4 варианта
+          </button>
+          <button class="button primary" id="exportButton" type="button">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 2.5v8m0 0 3-3m-3 3-3-3M3 11.5v2h10v-2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Скачать PNG
+          </button>
+          <button class="button svg-export" id="exportSvgButton" type="button">Скачать SVG · вектор</button>
+        </div>
+        <div class="aside-foot">Всё изображение обрабатывается локально в браузере. Файл никуда не загружается.</div>
+      </aside>
+
+      <main class="stage">
+        <div class="stage-head">
+          <div class="stage-title">ЖИВОЙ ПРЕДПРОСМОТР <span>1280 × 800</span></div>
+          <div class="stage-tools">
+            <button class="mini-button" id="invertButton" type="button" aria-pressed="false">Инвертировать форму</button>
+            <button class="mini-button" id="resetButton" type="button">Сбросить</button>
+          </div>
+        </div>
+        <div class="canvas-frame">
+          <canvas id="preview" width="1280" height="800" aria-label="Предпросмотр композиции из символов"></canvas>
+          <div class="canvas-caption" id="canvasCaption">DEMO FORM / 047</div>
+          <div class="canvas-meta">NUMERAL STUDY&nbsp;&nbsp;·&nbsp;&nbsp;01</div>
+        </div>
+        <div class="empty-note">Лучше всего читаются чёткие силуэты и контрастные изображения.</div>
+        <div class="variants" id="variants" aria-label="Варианты композиции"></div>
+      </main>
+    </div>
+  </div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="drawing.js?v=2"></script>
+  <script src="svg-export.js?v=2"></script>
+  <script>
+    (function () {
+      "use strict";
+      var W = 1280, H = 800;
+      var state = { mode: "shape", density: 68, size: 48, fillAmount: 45, fillSize: 50, glue: 50, morph: 34, contrast: 62, digits: "0123456789", paper: "#f2f0eb", ink: "auto", invert: false, animated: false };
+      var seed = 47, phase = 0, frame = 0, renderFrame = 0, sourceImage = null, sourceName = "", maskRevision = 0, maskCache = new Map(), weightCache = new Map(), toastTimer = 0, lastGeometry = null;
+      var preview = document.getElementById("preview");
+      var fileInput = document.getElementById("fileInput");
+      var variants = document.getElementById("variants");
+      var toast = document.getElementById("toast");
+      var defaultDigits = "0123456789";
+      var modeOrder = ["shape", "flow", "contour"];
+      var modeLabels = { shape: "Силуэт", flow: "Поток", contour: "Контур" };
+      var drawTools = window.createDrawingTools({
+        canvas: preview,
+        onChange: function () { maskRevision++; maskCache.clear(); weightCache.clear(); scheduleRender(); }
+      });
+
+      function clamp(value, min, max) { return Math.max(min, Math.min(max, value)); }
+      function smoothstep(edge0, edge1, x) {
+        var t = clamp((x - edge0) / Math.max(0.0001, edge1 - edge0), 0, 1);
+        return t * t * (3 - 2 * t);
+      }
+      function hash(x, y, s) {
+        var n = Math.sin(x * 127.1 + y * 311.7 + s * 74.7) * 43758.5453123;
+        return n - Math.floor(n);
+      }
+      function noise(x, y, s) {
+        var ix = Math.floor(x), iy = Math.floor(y), fx = x - ix, fy = y - iy;
+        fx = fx * fx * (3 - 2 * fx); fy = fy * fy * (3 - 2 * fy);
+        var a = hash(ix, iy, s), b = hash(ix + 1, iy, s), c = hash(ix, iy + 1, s), d = hash(ix + 1, iy + 1, s);
+        var top = a + (b - a) * fx, bottom = c + (d - c) * fx;
+        return top + (bottom - top) * fy;
+      }
+      function showToast(message) {
+        toast.textContent = message;
+        toast.classList.add("show");
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(function () { toast.classList.remove("show"); }, 2100);
+      }
+      function getDefaultMask() {
+        var c = document.createElement("canvas"); c.width = 1000; c.height = 625;
+        var x = c.getContext("2d");
+        x.lineCap = "round"; x.lineJoin = "round"; x.strokeStyle = "#000";
+        x.lineWidth = 55;
+        x.beginPath();
+        x.moveTo(650, -25);
+        x.bezierCurveTo(520, 35, 830, 105, 610, 152);
+        x.bezierCurveTo(505, 176, 590, 228, 470, 255);
+        x.bezierCurveTo(338, 286, 585, 325, 432, 378);
+        x.bezierCurveTo(278, 431, 480, 462, 372, 515);
+        x.bezierCurveTo(311, 547, 428, 580, 550, 653);
+        x.stroke();
+        x.lineWidth = 39;
+        x.beginPath(); x.moveTo(604, 157); x.bezierCurveTo(750, 104, 778, 158, 920, 119); x.stroke();
+        x.beginPath(); x.moveTo(474, 252); x.bezierCurveTo(334, 225, 272, 178, 214, 188); x.stroke();
+        x.beginPath(); x.moveTo(423, 382); x.bezierCurveTo(575, 345, 625, 390, 740, 365); x.stroke();
+        x.beginPath(); x.moveTo(370, 511); x.bezierCurveTo(236, 504, 180, 546, 120, 570); x.stroke();
+        x.lineWidth = 29;
+        x.beginPath(); x.moveTo(615, 137); x.bezierCurveTo(580, 90, 553, 85, 530, 65); x.stroke();
+        x.beginPath(); x.moveTo(445, 373); x.bezierCurveTo(381, 330, 328, 335, 289, 318); x.stroke();
+        return c;
+      }
+      var demoMask = getDefaultMask();
+
+      function drawMask(ctx, width, height) {
+        ctx.clearRect(0, 0, width, height);
+        var padding = Math.min(width, height) * 0.075;
+        if (drawTools.useDrawing()) {
+          drawTools.drawTo(ctx, width, height);
+        } else if (sourceImage) {
+          var iw = sourceImage.naturalWidth || sourceImage.width;
+          var ih = sourceImage.naturalHeight || sourceImage.height;
+          var fit = Math.min((width - padding * 2) / iw, (height - padding * 2) / ih);
+          var dw = iw * fit, dh = ih * fit;
+          ctx.drawImage(sourceImage, (width - dw) / 2, (height - dh) / 2, dw, dh);
+        } else {
+          ctx.drawImage(demoMask, padding, padding, width - padding * 2, height - padding * 2);
+        }
+      }
+      function getMask(width, height) {
+        var key = width + "x" + height + ":" + maskRevision;
+        if (maskCache.has(key)) return maskCache.get(key);
+        var factor = Math.min(1, 640 / width);
+        var c = document.createElement("canvas"); c.width = Math.round(width * factor); c.height = Math.round(height * factor);
+        var ctx = c.getContext("2d", { willReadFrequently: true });
+        drawMask(ctx, c.width, c.height);
+        var image = ctx.getImageData(0, 0, c.width, c.height);
+        if (maskCache.size >= 4) maskCache.clear();
+        maskCache.set(key, image);
+        return image;
+      }
+      function sampleWeight(image, x, y, cfg) {
+        var ix = clamp(Math.round(x), 0, image.width - 1), iy = clamp(Math.round(y), 0, image.height - 1);
+        var k = (iy * image.width + ix) * 4, alpha = image.data[k + 3] / 255;
+        if (alpha < 0.03) return 0;
+        var lum = (image.data[k] * 0.2126 + image.data[k + 1] * 0.7152 + image.data[k + 2] * 0.0722) / 255;
+        var tone = cfg.invert ? lum : 1 - lum;
+        var threshold = 0.08 + cfg.contrast * 0.0032;
+        return smoothstep(threshold, Math.min(1, threshold + 0.34), tone) * alpha;
+      }
+      function pickInk(cfg, value) {
+        if (cfg.ink !== "auto") return cfg.ink;
+        var darkPaper = cfg.paper === "#080908";
+        if (darkPaper) return value > 0.78 ? "#f2f0eb" : "#989a92";
+        return value > 0.78 ? "#10110f" : "#777971";
+      }
+      function renderOnCanvas(canvas, cfg, drawSeed, drawPhase) {
+        var width = canvas.width, height = canvas.height;
+        var ctx = canvas.getContext("2d");
+        ctx.clearRect(0, 0, width, height);
+        ctx.fillStyle = cfg.paper; ctx.fillRect(0, 0, width, height);
+        var scale = width / W;
+        var spacing = (12 + (100 - cfg.density) * 0.12) * scale * (width < 500 ? 1.5 : 1);
+        var cols = Math.ceil(width / spacing), rows = Math.ceil(height / spacing);
+        var weightKey = [width, height, maskRevision, cfg.density, cfg.contrast, cfg.invert].join(":");
+        var weights = weightCache.get(weightKey);
+        var x, y, col, row;
+        if (!weights) {
+          var mask = getMask(width, height);
+          weights = new Float32Array(cols * rows);
+          for (row = 0; row < rows; row++) {
+            y = (row + 0.5) * spacing;
+            for (col = 0; col < cols; col++) {
+              x = (col + 0.5) * spacing;
+              weights[row * cols + col] = sampleWeight(mask, x * mask.width / width, y * mask.height / height, cfg);
+            }
+          }
+          if (weightCache.size >= 8) weightCache.clear();
+          weightCache.set(weightKey, weights);
+        }
+        var fontSize = (6 + cfg.size * 0.155) * scale;
+        var inputText = cfg.digits || defaultDigits;
+        var digits = typeof Intl.Segmenter === "function"
+          ? Array.from(new Intl.Segmenter(undefined, {granularity:"grapheme"}).segment(inputText), function (item) { return item.segment; })
+          : Array.from(inputText);
+        var densityChance = 0.08 + cfg.density / 100 * 0.90;
+        var modeWarp = cfg.mode === "flow" ? 1 : (cfg.mode === "contour" ? 0.65 : 0.32);
+        var warpBase = cfg.morph / 100 * spacing * 5.3 * modeWarp;
+        var points = [];
+        ctx.textAlign = "center"; ctx.textBaseline = "middle";
+        for (row = 0; row < rows; row++) {
+          y = (row + 0.5) * spacing;
+          for (col = 0; col < cols; col++) {
+            var idx = row * cols + col, weight = weights[idx];
+            if (weight < 0.15) continue;
+            var edge = 1;
+            if (cfg.mode === "contour") {
+              edge = Math.abs(weights[row * cols + Math.min(cols - 1, col + 1)] - weights[row * cols + Math.max(0, col - 1)])
+                + Math.abs(weights[Math.min(rows - 1, row + 1) * cols + col] - weights[Math.max(0, row - 1) * cols + col]);
+            }
+            if (cfg.mode === "contour" && edge < 0.24) continue;
+            var rnd = hash(col, row, drawSeed);
+            var chance = cfg.mode === "contour" ? densityChance * clamp(edge * 1.8, 0.35, 1) : densityChance * weight;
+            if (rnd > chance) continue;
+            var px = (col + 0.5 + (hash(col + 8, row + 2, drawSeed) - 0.5) * 0.45) * spacing;
+            var py = (row + 0.5 + (hash(col + 4, row + 7, drawSeed) - 0.5) * 0.45) * spacing;
+            var nx = px / scale, ny = py / scale;
+            var n = noise(nx * 0.007 + drawPhase * 0.22, ny * 0.007 + drawSeed * 0.013, drawSeed);
+            var angle = n * Math.PI * 2 + (cfg.mode === "flow" ? Math.sin(ny * 0.009 + drawPhase) * 0.55 : 0);
+            var warp = warpBase * (0.35 + noise(nx * 0.014, ny * 0.014 + drawPhase * 0.1, drawSeed + 17));
+            px += Math.cos(angle) * warp;
+            py += Math.sin(angle) * warp;
+            var digitIndex = Math.floor(hash(col + 23, row + 19, drawSeed) * digits.length);
+            var localSize = Math.round(fontSize * (0.8 + hash(col + 41, row + 31, drawSeed) * 0.4));
+            points.push({ x: px, y: py, glyph: digits[digitIndex], size: localSize,
+              angle: cfg.mode === "flow" ? angle : 0, rank: hash(col + 91, row + 71, drawSeed), filled: false });
+          }
+        }
+        var fillCount = Math.round(points.length * cfg.fillAmount / 100);
+        var ranked = points.slice().sort(function (a, b) { return a.rank - b.rank; });
+        for (var i = 0; i < fillCount; i++) ranked[i].filled = true;
+        var ink = cfg.ink === "auto" ? (cfg.paper === "#080908" ? "#f2f0eb" : "#10110f") : cfg.ink;
+        var radius = fontSize * (0.55 + cfg.fillSize / 100 * 0.65);
+        var connectDistance = radius * (2 + cfg.glue / 100 * 2.3);
+        ctx.fillStyle = ink; ctx.strokeStyle = ink; ctx.lineCap = "round"; ctx.lineJoin = "round";
+        var bridges = [];
+        if (cfg.glue > 0 && fillCount > 1) {
+          var buckets = new Map(), cell = connectDistance;
+          ctx.beginPath();
+          for (var j = 0; j < fillCount; j++) {
+            var p = ranked[j], bx = Math.floor(p.x / cell), by = Math.floor(p.y / cell), nearest = null, best = connectDistance * connectDistance;
+            for (var dy = -1; dy <= 1; dy++) for (var dx = -1; dx <= 1; dx++) {
+              var bucket = buckets.get((bx + dx) + ":" + (by + dy));
+              if (!bucket) continue;
+              for (var k = 0; k < Math.min(bucket.length, 12); k++) {
+                var q = bucket[k], dist = (p.x - q.x) * (p.x - q.x) + (p.y - q.y) * (p.y - q.y);
+                if (dist < best) { best = dist; nearest = q; }
+              }
+            }
+            if (nearest) {
+              var vx = nearest.x - p.x, vy = nearest.y - p.y, length = Math.sqrt(best) || 1;
+              var ux = -vy / length, uy = vx / length, side = radius * 0.88, neck = radius * (0.28 + cfg.glue / 100 * 0.35);
+              var mx = (p.x + nearest.x) / 2, my = (p.y + nearest.y) / 2;
+              var x1 = p.x + ux * side, y1 = p.y + uy * side, x2 = nearest.x + ux * side, y2 = nearest.y + uy * side;
+              var x3 = nearest.x - ux * side, y3 = nearest.y - uy * side, x4 = p.x - ux * side, y4 = p.y - uy * side;
+              ctx.moveTo(x1, y1); ctx.quadraticCurveTo(mx + ux * neck, my + uy * neck, x2, y2);
+              ctx.lineTo(x3, y3); ctx.quadraticCurveTo(mx - ux * neck, my - uy * neck, x4, y4); ctx.closePath();
+              bridges.push({d: "M" + x1 + " " + y1 + " Q" + (mx + ux * neck) + " " + (my + uy * neck) + " " + x2 + " " + y2
+                + " L" + x3 + " " + y3 + " Q" + (mx - ux * neck) + " " + (my - uy * neck) + " " + x4 + " " + y4 + " Z"});
+            }
+            var key = bx + ":" + by;
+            if (!buckets.has(key)) buckets.set(key, []);
+            buckets.get(key).push(p);
+          }
+          ctx.fill();
+        }
+        ctx.beginPath();
+        for (var b = 0; b < fillCount; b++) {
+          var blob = ranked[b];
+          ctx.moveTo(blob.x + radius, blob.y);
+          ctx.arc(blob.x, blob.y, radius, 0, Math.PI * 2);
+        }
+        ctx.fill();
+        ctx.globalAlpha = 1;
+        for (var t = 0; t < points.length; t++) {
+          var point = points[t];
+          ctx.fillStyle = point.filled ? cfg.paper : ink;
+          ctx.font = "400 " + point.size + 'px "Courier New", monospace';
+          if (point.angle) {
+            ctx.save(); ctx.translate(point.x, point.y); ctx.rotate(point.angle);
+            ctx.fillText(point.glyph, 0, 0); ctx.restore();
+          } else ctx.fillText(point.glyph, point.x, point.y);
+        }
+        if (canvas === preview) lastGeometry = {width: width, height: height, paper: cfg.paper, ink: ink, radius: radius, points: points, bridges: bridges};
+        return points.length;
+      }
+      function render() {
+        var cfg = Object.assign({}, state);
+        var count = renderOnCanvas(preview, cfg, seed, phase);
+        document.getElementById("canvasCaption").textContent = (sourceName ? sourceName.toUpperCase() : "DEMO FORM") + " / " + String(seed).padStart(3, "0");
+        document.querySelector(".canvas-meta").textContent = count.toLocaleString("ru-RU") + " GLYPHS  ·  " + state.mode.toUpperCase();
+      }
+      function updateReadouts() {
+        document.getElementById("densityValue").textContent = state.density + "%";
+        document.getElementById("sizeValue").textContent = state.size + "%";
+        document.getElementById("fillAmountValue").textContent = state.fillAmount + "%";
+        document.getElementById("fillSizeValue").textContent = state.fillSize + "%";
+        document.getElementById("glueValue").textContent = state.glue + "%";
+        document.getElementById("morphValue").textContent = state.morph + "%";
+        document.getElementById("contrastValue").textContent = state.contrast + "%";
+        var n = modeOrder.indexOf(state.mode) + 1;
+        document.getElementById("modeReadout").textContent = "0" + n + " / 03";
+        document.querySelectorAll(".mode").forEach(function (button) {
+          var active = button.dataset.mode === state.mode;
+          button.classList.toggle("active", active);
+          button.setAttribute("aria-pressed", String(active));
+        });
+      }
+      function syncControls() {
+        document.getElementById("density").value = state.density;
+        document.getElementById("size").value = state.size;
+        document.getElementById("fillAmount").value = state.fillAmount;
+        document.getElementById("fillSize").value = state.fillSize;
+        document.getElementById("glue").value = state.glue;
+        document.getElementById("morph").value = state.morph;
+        document.getElementById("contrast").value = state.contrast;
+        document.getElementById("digits").value = state.digits;
+        document.getElementById("ink").value = state.ink;
+        document.getElementById("animate").checked = state.animated;
+        document.querySelectorAll(".swatch").forEach(function (button) {
+          button.classList.toggle("active", button.dataset.paper === state.paper);
+        });
+        document.getElementById("invertButton").setAttribute("aria-pressed", String(state.invert));
+        updateReadouts();
+      }
+      function changeState() {
+        syncControls();
+        scheduleRender();
+        if (state.animated && !frame) startAnimation();
+        if (!state.animated && frame) { cancelAnimationFrame(frame); frame = 0; }
+      }
+      function scheduleRender() {
+        if (renderFrame) return;
+        renderFrame = requestAnimationFrame(function () { renderFrame = 0; render(); });
+      }
+      function startAnimation() {
+        if (!state.animated || frame) return;
+        var last = 0;
+        function tick(time) {
+          if (!state.animated) { frame = 0; return; }
+          if (time - last > 100) {
+            phase += 0.11;
+            render();
+            last = time;
+          }
+          frame = requestAnimationFrame(tick);
+        }
+        frame = requestAnimationFrame(tick);
+      }
+      function setMode(mode) { state.mode = mode; changeState(); }
+      function loadFile(file) {
+        if (!file || !file.type || file.type.indexOf("image/") !== 0) { showToast("Выберите файл изображения"); return; }
+        var url = URL.createObjectURL(file), img = new Image();
+        img.onload = function () {
+          if (sourceImage && sourceImage.src && sourceImage.src.indexOf("blob:") === 0) URL.revokeObjectURL(sourceImage.src);
+          sourceImage = img; sourceName = file.name || "IMAGE"; drawTools.useImage();
+          maskRevision++; maskCache.clear(); weightCache.clear();
+          document.getElementById("fileName").textContent = sourceName;
+          changeState();
+          variants.classList.remove("show");
+          showToast("Форма загружена");
+          URL.revokeObjectURL(url);
+        };
+        img.onerror = function () { URL.revokeObjectURL(url); showToast("Не удалось открыть это изображение"); };
+        img.src = url;
+      }
+
+      document.getElementById("uploadButton").addEventListener("click", function () { fileInput.click(); });
+      fileInput.addEventListener("change", function (event) { loadFile(event.target.files[0]); event.target.value = ""; });
+      var uploadButton = document.getElementById("uploadButton");
+      uploadButton.addEventListener("dragover", function (event) { event.preventDefault(); uploadButton.classList.add("drag"); });
+      uploadButton.addEventListener("dragleave", function () { uploadButton.classList.remove("drag"); });
+      uploadButton.addEventListener("drop", function (event) {
+        event.preventDefault(); uploadButton.classList.remove("drag");
+        if (event.dataTransfer.files.length) loadFile(event.dataTransfer.files[0]);
+      });
+      document.querySelectorAll(".mode").forEach(function (button) {
+        button.addEventListener("click", function () { setMode(button.dataset.mode); });
+      });
+      ["density", "size", "fillAmount", "fillSize", "glue", "morph", "contrast"].forEach(function (id) {
+        document.getElementById(id).addEventListener("input", function () {
+          state[id] = Number(this.value); changeState();
+        });
+      });
+      document.getElementById("digits").addEventListener("input", function () {
+        state.digits = this.value || defaultDigits;
+        scheduleRender();
+      });
+      document.getElementById("ink").addEventListener("change", function () { state.ink = this.value; scheduleRender(); });
+      document.querySelectorAll(".swatch").forEach(function (button) {
+        button.addEventListener("click", function () { state.paper = button.dataset.paper; scheduleRender(); syncControls(); });
+      });
+      document.getElementById("animate").addEventListener("change", function () {
+        state.animated = this.checked;
+        if (state.animated) startAnimation();
+        else { cancelAnimationFrame(frame); frame = 0; scheduleRender(); }
+      });
+      document.getElementById("invertButton").addEventListener("click", function () {
+        state.invert = !state.invert; this.setAttribute("aria-pressed", String(state.invert)); scheduleRender();
+        showToast(state.invert ? "Светлые области стали формой" : "Тёмные области стали формой");
+      });
+      document.getElementById("resetButton").addEventListener("click", function () {
+        if (sourceImage && sourceImage.src && sourceImage.src.indexOf("blob:") === 0) URL.revokeObjectURL(sourceImage.src);
+        sourceImage = null; sourceName = ""; seed = 47; phase = 0; drawTools.clearDrawing(); drawTools.useImage(); maskRevision++; maskCache.clear(); weightCache.clear();
+        state = { mode: "shape", density: 68, size: 48, fillAmount: 45, fillSize: 50, glue: 50, morph: 34, contrast: 62, digits: defaultDigits, paper: "#f2f0eb", ink: "auto", invert: false, animated: false };
+        document.getElementById("fileName").textContent = "PNG, JPG или SVG · работает и демо-форма";
+        variants.classList.remove("show");
+        changeState(); showToast("Исходные настройки восстановлены");
+      });
+      document.getElementById("variantsButton").addEventListener("click", function () {
+        if (variants.classList.contains("show")) { variants.classList.remove("show"); return; }
+        var presets = [
+          { title: "01 / СИЛУЭТ", cfg: Object.assign({}, state, { mode: "shape", density: state.density, morph: Math.max(8, state.morph - 12) }), seed: seed + 13 },
+          { title: "02 / ПОТОК", cfg: Object.assign({}, state, { mode: "flow", density: Math.min(100, state.density + 7), morph: Math.min(100, state.morph + 22) }), seed: seed + 71 },
+          { title: "03 / КОНТУР", cfg: Object.assign({}, state, { mode: "contour", density: Math.max(30, state.density - 5), morph: Math.max(5, state.morph - 4) }), seed: seed + 139 },
+          { title: "04 / РАСТВОРЕНИЕ", cfg: Object.assign({}, state, { mode: "flow", density: Math.max(25, state.density - 10), morph: Math.min(100, state.morph + 48) }), seed: seed + 223 }
+        ];
+        variants.innerHTML = "";
+        presets.forEach(function (item, index) {
+          var card = document.createElement("button");
+          card.type = "button"; card.className = "variant-card" + (index === 0 ? " selected" : "");
+          card.setAttribute("aria-label", "Выбрать вариант " + item.title);
+          var thumb = document.createElement("canvas"); thumb.width = 320; thumb.height = 200;
+          var label = document.createElement("div"); label.className = "variant-name";
+          label.innerHTML = "<span>" + item.title + "</span><span>↗</span>";
+          card.appendChild(thumb); card.appendChild(label);
+          renderOnCanvas(thumb, Object.assign({}, item.cfg, { density: Math.min(item.cfg.density, 45), animated: false }), item.seed, phase);
+          card.addEventListener("click", function () {
+            state = Object.assign({}, item.cfg, { animated: state.animated });
+            seed = item.seed; phase = 0; syncControls(); scheduleRender();
+            variants.querySelectorAll(".variant-card").forEach(function (el) { el.classList.remove("selected"); });
+            card.classList.add("selected");
+          });
+          variants.appendChild(card);
+        });
+        variants.classList.add("show");
+      });
+      document.getElementById("exportButton").addEventListener("click", function () {
+        var button = this; button.disabled = true; button.textContent = "Готовлю PNG…";
+        setTimeout(function () {
+          var output = document.createElement("canvas"); output.width = 2560; output.height = 1600;
+          renderOnCanvas(output, Object.assign({}, state), seed, phase);
+          output.toBlob(function (blob) {
+            if (!blob) { showToast("Не удалось создать файл"); button.disabled = false; button.innerHTML = "Скачать PNG"; return; }
+            var link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = "numeral-field-" + String(seed).padStart(3, "0") + ".png";
+            document.body.appendChild(link); link.click(); link.remove(); URL.revokeObjectURL(link.href);
+            button.disabled = false;
+            button.innerHTML = '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 2.5v8m0 0 3-3m-3 3-3-3M3 11.5v2h10v-2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>Скачать PNG';
+            showToast("PNG готов · 2560 × 1600");
+          }, "image/png");
+        }, 20);
+      });
+      document.getElementById("exportSvgButton").addEventListener("click", function () {
+        render();
+        if (!lastGeometry || typeof window.createNumeralSVG !== "function") { showToast("Не удалось создать SVG"); return; }
+        var svg = window.createNumeralSVG(lastGeometry);
+        var url = URL.createObjectURL(new Blob([svg], {type: "image/svg+xml;charset=utf-8"}));
+        var link = document.createElement("a");
+        link.href = url; link.download = "numeral-field-" + String(seed).padStart(3, "0") + ".svg";
+        document.body.appendChild(link); link.click(); link.remove();
+        setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+        showToast("SVG готов · вектор");
+      });
+
+      syncControls();
+      render();
+    })();
+  </script>
+</body>
+</html>
